@@ -1,0 +1,32 @@
+train = read.csv("Desktop/Kaggle Competition/all/train.csv")
+test = read.csv("Desktop/Kaggle Competition/all/test.csv")
+
+test$Sex <- as.numeric(test$Sex)
+test$Pclass <- as.numeric(test$Pclass)
+train$Sex <- as.numeric(train$Sex)
+train$Pclass <- as.numeric(train$Pclass)
+train$PassengerId <- as.factor(train$PassengerId)
+train[,c(1,2,3,5,12)] = lapply(train[,c(1,2,3,5,12)], FUN = as.factor)
+test[,c(1,2,4,11)] = lapply(test[,c(1,2,4,11)], FUN = as.factor)
+
+model1=glm(Survived~Pclass+Sex+Age+Fare+Embarked,data=train,
+           family=binomial(link='logit'))
+summary(model1)
+train1 = subset.data.frame(train, train$Sex=="1")
+
+
+sub = which(is.na(train$Age) == T)
+View(sub)
+train_Age = train[-sub,]
+train_No_Age = train[sub,]
+
+lm = lm(Age~Pclass+Sex+SibSp+Parch+Fare+Embarked,data = train_Age)
+Age_predict = predict(lm,newdata = train_No_Age)
+train[sub,"Age"] = round(Age_predict,0)
+
+rf = randomForest(Survived~Sex+Age+Pclass+SibSp+Parch+Fare+Embarked,
+                  data = train,ntree=100)
+
+
+prediction = predict(model1,newdata = test)
+result = data.frame(test$PassengerId,prediction)
